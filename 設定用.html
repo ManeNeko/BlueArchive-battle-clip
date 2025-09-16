@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>動画設定ツール</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            background-color: #f0f2f5;
+            color: #333;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            margin: 0;
+            padding: 1rem 0;
+        }
+        .container {
+            background-color: #fff;
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            text-align: center;
+            width: 90%;
+            max-width: 65%;
+        }
+        h1 {
+            color: #1c1e21;
+			margin: 0;
+        }
+        input[type="file"] {
+            margin-bottom: 1rem;
+        }
+        video {
+            display: block;
+            margin: 1rem auto;
+            max-width: 100%;
+            height: auto;
+            border: 1px solid #ddd;
+            background-color: #000;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1rem;
+            margin-top: 1rem;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>初期設定用ツール</h1>
+        <p>アップした動画の指定フレームを保存します。</p>
+        
+        <input type="file" id="videoUpload" accept="video/*">
+        
+        <video id="videoPlayer" controls></video>
+        
+        <button id="downloadFrameBtn" disabled>このフレームを保存</button>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const videoUpload = document.getElementById('videoUpload');
+            const videoPlayer = document.getElementById('videoPlayer');
+            const downloadFrameBtn = document.getElementById('downloadFrameBtn');
+
+            let videoLoaded = false;
+
+            // ファイルが選択されたときの処理
+            videoUpload.addEventListener('change', (event) => {
+                const file = event.target.files[0];
+                if (file) {
+                    const videoURL = URL.createObjectURL(file);
+                    videoPlayer.src = videoURL;
+                    videoLoaded = false;
+                    downloadFrameBtn.disabled = true;
+                }
+            });
+
+            // 動画のメタデータが読み込まれたときの処理
+            videoPlayer.addEventListener('loadedmetadata', () => {
+                videoLoaded = true;
+                downloadFrameBtn.disabled = false;
+            });
+
+            // ダウンロードボタンがクリックされたときの処理
+            downloadFrameBtn.addEventListener('click', () => {
+                if (!videoLoaded) {
+                    alert('動画が読み込まれていません。');
+                    return;
+                }
+                if (!videoPlayer.paused) {
+                    alert('画像をダウンロードするには、動画を一時停止してください。');
+                    return;
+                }
+
+                // canvasを作成して現在のフレームを描画
+                const canvas = document.createElement('canvas');
+                canvas.width = videoPlayer.videoWidth;
+                canvas.height = videoPlayer.videoHeight;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(videoPlayer, 0, 0, canvas.width, canvas.height);
+
+                // canvasの内容を画像としてダウンロード
+                const a = document.createElement('a');
+                a.href = canvas.toDataURL('image/png');
+                
+                // ファイル名を生成 (例: frame_10.52s.png)
+                const timeInSeconds = videoPlayer.currentTime.toFixed(2);
+                a.download = `frame_${timeInSeconds}s.png`;
+                
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+            });
+        });
+    </script>
+
+</body>
+</html>
